@@ -8,7 +8,6 @@ import {
   Paper,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -62,15 +61,12 @@ export default function Form() {
 
   const onSubmit = (data: FormData) => {
     console.log("Form submitted:", data);
-    setDefaultValues(data);
   };
 
   const handleClear = () => {
     setDefaultValues(defaultFormState);
     reset(defaultFormState);
   };
-
-  console.log("content", defaultValues.content);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enAU}>
@@ -113,7 +109,16 @@ export default function Form() {
                 onInputChange={(_, newInputValue) => {
                   setInputValue(newInputValue);
                 }}
-                onChange={(_, newValue) => field.onChange(newValue)}
+                onChange={(_, newValue) => {
+                  field.onChange(newValue);
+                  setDefaultValues(async (promise) => {
+                    const prev = await promise;
+                    return {
+                      ...prev,
+                      tags: newValue,
+                    };
+                  });
+                }}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
                     <Chip
@@ -147,6 +152,15 @@ export default function Form() {
             render={({ field }) => (
               <TextField
                 {...field}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+
+                  setDefaultValues(async (promise) => {
+                    const prev = await promise;
+                    const newValue = { ...prev, slug: e.target.value };
+                    return newValue;
+                  });
+                }}
                 label="Slug"
                 fullWidth
                 error={!!errors.slug}
@@ -165,10 +179,13 @@ export default function Form() {
                     {...field}
                     onChange={(e) => {
                       field.onChange(e.target.value);
-                      setDefaultValues((prev) => ({
-                        ...prev,
-                        content: e.target.value,
-                      }));
+                      setDefaultValues(async (promise) => {
+                        const prev = await promise;
+                        return {
+                          ...prev,
+                          content: e.target.value,
+                        };
+                      });
                     }}
                     label="Content (Markdown)"
                     multiline
@@ -191,21 +208,17 @@ export default function Form() {
                   overflow: "auto",
                 }}
               >
-                <Typography
-                  variant="caption"
-                  color="textSecondary"
-                  display="block"
-                  gutterBottom
-                >
-                  Preview
-                </Typography>
                 <Box
                   sx={{
                     textAlign: "left",
-                    blockquote: {
+                    "& blockquote": {
                       borderLeft: "4px solid #ccc",
                       margin: 0,
                       paddingLeft: 1,
+                    },
+                    "& p": {
+                      marginBlockStart: 0,
+                      marginBlockEnd: 0,
                     },
                   }}
                 >
