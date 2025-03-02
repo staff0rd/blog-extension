@@ -1,5 +1,5 @@
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { defineConfig } from "wxt";
-
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   extensionApi: "chrome",
@@ -7,4 +7,8 @@ export default defineConfig({
   manifest: {
     permissions: ["storage"],
   },
+  // @ts-ignore
+  vite: () => ({
+    plugins: [nodePolyfills()],
+  }),
 });
