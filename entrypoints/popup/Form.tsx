@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
@@ -18,6 +19,7 @@ import { omit } from "lodash";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ReactMarkdown from "react-markdown";
+import { storage } from "wxt/storage";
 import {
   defaultFormState,
   FormData,
@@ -48,6 +50,10 @@ export default function Form() {
   // Get available tags from the atom
   const availableTags = useAtomValue(tagsAtom);
   const [inputValue, setInputValue] = useState("");
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   // Filter tags based on input
   const filteredOptions = useMemo(() => {
@@ -59,8 +65,86 @@ export default function Form() {
         );
   }, [availableTags, inputValue]);
 
-  const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data);
+  const onSubmit = async (data: FormData) => {
+    setSubmitStatus(null);
+    try {
+      // Get GitHub PAT and repo info from storage
+      const githubPat = await storage.getItem("sync:githubPat");
+      const repoPath = (await storage.getItem("sync:repoPath")) as string;
+      const [owner, repo, path] = repoPath.split("/");
+
+      if (!githubPat || !repoPath) {
+        throw new Error("GitHub configuration not found");
+      }
+
+      // Format date for filename
+      const date = data.timestamp.toISOString().split("T")[0];
+      const filename = `${date}-${data.slug}.md`;
+
+      // Format content
+      const content = `---
+date: ${data.timestamp.toISOString()}
+tags: [${data.tags.join(", ")}]
+---
+
+${data.content}`;
+
+      // Get current content to get SHA (if file exists)
+      let sha: string | undefined;
+      try {
+        const response = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${filename}`,
+          {
+            headers: {
+              Authorization: `Bearer ${githubPat}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (response.ok) {
+          const fileData = await response.json();
+          sha = fileData.sha;
+        }
+      } catch (error) {
+        console.log("File doesn't exist yet, creating new one");
+      }
+
+      // Create/update file in GitHub
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${path}/${filename}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${githubPat}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: `Add ${filename}`,
+            content: btoa(content),
+            ...(sha ? { sha } : {}),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.statusText}`);
+      }
+      setSubmitStatus({
+        type: "success",
+        message: `Successfully saved ${filename} to GitHub`,
+      });
+
+      // Clear form on success
+      handleClear();
+    } catch (error) {
+      console.error("Failed to submit:", error);
+      setSubmitStatus({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
+      throw error;
+    }
   };
 
   const handleClear = () => {
@@ -77,6 +161,14 @@ export default function Form() {
         sx={{ mt: 1 }}
       >
         <Stack spacing={3}>
+          {submitStatus && (
+            <Alert
+              severity={submitStatus.type}
+              onClose={() => setSubmitStatus(null)}
+            >
+              {submitStatus.message}
+            </Alert>
+          )}
           <Controller
             name="timestamp"
             control={control}
