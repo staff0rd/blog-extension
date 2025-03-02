@@ -1,6 +1,6 @@
-import { localExtStorage } from "@webext-core/storage";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import { storage } from "wxt/storage";
 import { z } from "zod";
 
 // Form schema definition for type safety
@@ -21,24 +21,25 @@ export const defaultFormState: FormData = {
   timestamp: new Date(),
 };
 
-const localKey = (key: string) => `local:${key}`;
+const localKey = (key: string) => `local:${key}` as const;
 
-// Form state atom
+const formStateKey = "blog-extension-form";
 export const formStateAtom = atomWithStorage<FormData>(
-  "blog-extension-form",
+  formStateKey,
   defaultFormState,
   {
     getItem: async (key, defaultValue) => {
-      const value = await localExtStorage.getItem(localKey(key));
-      return value ? JSON.parse(value) : defaultValue;
+      const value = await storage.getItem(localKey(key));
+      return value ? JSON.parse(value as string) : defaultValue;
     },
     setItem: async (key, newValue) => {
-      await localExtStorage.setItem(localKey(key), JSON.stringify(newValue));
+      await storage.setItem(localKey(key), JSON.stringify(newValue));
     },
     removeItem: async (key) => {
-      await localExtStorage.removeItem(localKey(key));
+      await storage.removeItem(localKey(key));
     },
-  }
+  },
+  { getOnInit: true }
 );
 
 interface TagsResponse {

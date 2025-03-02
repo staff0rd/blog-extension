@@ -13,7 +13,9 @@ import {
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { enAU } from "date-fns/locale";
 import { useAtom, useAtomValue } from "jotai";
+import { omit } from "lodash";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ReactMarkdown from "react-markdown";
@@ -26,7 +28,7 @@ import {
 } from "./atoms";
 
 export default function Form() {
-  const [formState, setFormState] = useAtom(formStateAtom);
+  const [defaultValues, setDefaultValues] = useAtom(formStateAtom);
   const {
     control,
     handleSubmit,
@@ -35,7 +37,10 @@ export default function Form() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: formState,
+    defaultValues: {
+      timestamp: new Date(),
+      ...omit(defaultValues, ["timestamp"]),
+    },
   });
 
   // Watch content field for live preview
@@ -57,16 +62,18 @@ export default function Form() {
 
   const onSubmit = (data: FormData) => {
     console.log("Form submitted:", data);
-    setFormState(data);
+    setDefaultValues(data);
   };
 
   const handleClear = () => {
-    setFormState(defaultFormState);
+    setDefaultValues(defaultFormState);
     reset(defaultFormState);
   };
 
+  console.log("content", defaultValues.content);
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enAU}>
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
@@ -156,6 +163,13 @@ export default function Form() {
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      setDefaultValues((prev) => ({
+                        ...prev,
+                        content: e.target.value,
+                      }));
+                    }}
                     label="Content (Markdown)"
                     multiline
                     rows={8}
@@ -185,7 +199,18 @@ export default function Form() {
                 >
                   Preview
                 </Typography>
-                <ReactMarkdown>{content || "*No content yet*"}</ReactMarkdown>
+                <Box
+                  sx={{
+                    textAlign: "left",
+                    blockquote: {
+                      borderLeft: "4px solid #ccc",
+                      margin: 0,
+                      paddingLeft: 1,
+                    },
+                  }}
+                >
+                  <ReactMarkdown>{content || "*No content yet*"}</ReactMarkdown>
+                </Box>
               </Paper>
             </Grid>
           </Grid>
