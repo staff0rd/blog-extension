@@ -6,6 +6,10 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
     permissions: ["storage"],
+    options_ui: {
+      page: "entrypoints/options/index.html",
+      open_in_tab: true,
+    },
   },
   // @ts-ignore
   vite: () => ({

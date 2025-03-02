@@ -19,6 +19,7 @@
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
     "@hookform/resolvers": "^4.1.2",
+    "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
     "@mui/x-date-pickers": "^7.27.1",
     "date-fns": "^2.30.0",
