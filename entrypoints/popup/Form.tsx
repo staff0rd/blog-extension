@@ -120,7 +120,7 @@ ${data.content}`;
           },
           body: JSON.stringify({
             message: `Add ${filename}`,
-            content: btoa(content),
+            content: btoa(unescape(encodeURIComponent(content))),
             ...(sha ? { sha } : {}),
           }),
         }
