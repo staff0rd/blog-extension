@@ -9,8 +9,7 @@ function App() {
         sx={{
           display: "flex",
           flexDirection: "column",
-          minWidth: "800px",
-          margin: "0 auto",
+          //margin: "0 auto",
           padding: 2,
           textAlign: "center",
         }}
