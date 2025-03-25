@@ -12,6 +12,7 @@ import {
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { format } from "date-fns";
 import { enAU } from "date-fns/locale";
 import { useAtom, useAtomValue } from "jotai";
 import { omit } from "lodash";
@@ -77,12 +78,12 @@ export default function Form() {
       }
 
       // Format date for filename
-      const date = data.timestamp.toISOString().split("T")[0];
+      const date = format(data.timestamp, "yyyy-MM-dd");
       const filename = `${date}-${data.slug}.md`;
 
       // Format content
       const content = `---
-date: ${data.timestamp.toISOString()}
+date: ${format(data.timestamp, "yyyy-MM-dd'T'HH:mm:ssXXX")}
 tags: [${data.tags.join(", ")}]
 ---
 
