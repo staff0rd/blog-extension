@@ -256,7 +256,6 @@ ${data.content}`;
                   {...field}
                   onChange={(e) => {
                     field.onChange(e.target.value);
-
                     setDefaultValues(async (promise) => {
                       const prev = await promise;
                       const newValue = { ...prev, slug: e.target.value };

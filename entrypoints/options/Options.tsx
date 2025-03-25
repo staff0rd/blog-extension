@@ -80,7 +80,7 @@ export const Options = () => {
             label="GitHub Repository Path"
             fullWidth
             error={!!errors.repoPath}
-            helperText={errors.repoPath?.message || "e.g. owner/repo"}
+            helperText={errors.repoPath?.message || "e.g. owner/repo/path"}
           />
           <Box>
             <Stack
